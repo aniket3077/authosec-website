@@ -1,15 +1,78 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, QrCode } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { onAuthChange, User } from '../services/auth';
+import api from '../services/api';
 
 interface NavbarProps {
   isAuthenticated?: boolean;
   onSignOut?: () => void;
 }
 
+interface UserProfile {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: 'SUPER_ADMIN' | 'COMPANY_ADMIN' | 'ACCOUNT_USER';
+  companyId: string | null;
+  isActive: boolean;
+}
+
 export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const unsubscribe = onAuthChange((authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        loadUserProfile();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const response = await api.users.getProfile();
+      if (response.success && response.data) {
+        const data = response.data as { user: UserProfile };
+        setProfile(data.user);
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    }
+  };
+
+  const getDashboardLink = () => {
+    if (!profile) return '/dashboard';
+    
+    switch (profile.role) {
+      case 'SUPER_ADMIN':
+        return '/admin/dashboard';
+      case 'COMPANY_ADMIN':
+        return '/company/dashboard';
+      default:
+        return '/dashboard';
+    }
+  };
+
+  const getDashboardLabel = () => {
+    if (!profile) return 'Dashboard';
+    
+    switch (profile.role) {
+      case 'SUPER_ADMIN':
+        return 'Admin Panel';
+      case 'COMPANY_ADMIN':
+        return 'Company Dashboard';
+      default:
+        return 'Dashboard';
+    }
+  };
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -56,10 +119,10 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
             {isAuthenticated ? (
               <>
                 <Link
-                  to="/dashboard"
+                  to={getDashboardLink()}
                   className="text-dark-200 hover:text-white px-4 py-2 rounded-lg hover:bg-dark-700 transition-all text-sm font-medium"
                 >
-                  Dashboard
+                  {getDashboardLabel()}
                 </Link>
                 <button
                   onClick={onSignOut}
@@ -71,16 +134,16 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
             ) : (
               <>
                 <Link
-                  to="/login"
+                  to="/sign-in"
                   className="text-dark-200 hover:text-white px-4 py-2 rounded-lg hover:bg-dark-700 transition-all text-sm font-medium"
                 >
-                  Login
+                  Sign In
                 </Link>
                 <Link
-                  to="/register"
+                  to="/sign-up"
                   className="firebase-gradient text-dark-900 px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-semibold shadow-lg"
                 >
-                  Register Company
+                  Get Started
                 </Link>
               </>
             )}
@@ -120,11 +183,11 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
               {isAuthenticated ? (
                 <>
                   <Link
-                    to="/dashboard"
+                    to={getDashboardLink()}
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 rounded-lg text-dark-200 hover:bg-dark-700 hover:text-white text-sm font-medium"
                   >
-                    Dashboard
+                    {getDashboardLabel()}
                   </Link>
                   <button
                     onClick={() => {
@@ -139,18 +202,18 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
               ) : (
                 <>
                   <Link
-                    to="/login"
+                    to="/sign-in"
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 rounded-lg text-dark-200 hover:bg-dark-700 hover:text-white text-sm font-medium"
                   >
-                    Login
+                    Sign In
                   </Link>
                   <Link
-                    to="/register"
+                    to="/sign-up"
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 rounded-lg firebase-gradient text-dark-900 hover:opacity-90 text-center text-sm font-semibold"
                   >
-                    Register Company
+                    Get Started
                   </Link>
                 </>
               )}

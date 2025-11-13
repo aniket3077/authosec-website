@@ -1,35 +1,20 @@
 import { useState, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
-import { getCompanyByUserId } from '../services/company';
-import { Company } from '../types';
+import { onAuthChange } from '../services/auth';
+import type { User } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function TestAuth() {
-  const [user, setUser] = useState<any>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-
-    if (currentUser) {
-      setUser({
-        uid: currentUser.uid,
-        email: currentUser.email,
-        displayName: currentUser.displayName,
-        emailVerified: currentUser.emailVerified,
-      });
-
-      // Fetch company data
-      getCompanyByUserId(currentUser.uid)
-        .then(setCompany)
-        .catch(err => setError(err.message))
-        .finally(() => setLoading(false));
-    } else {
+    const unsubscribe = onAuthChange((authUser) => {
+      setUser(authUser);
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
@@ -41,78 +26,56 @@ export default function TestAuth() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Authentication Test</h1>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-8">
-            {/* User Information */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">User Information</h2>
+    <div className="min-h-screen bg-dark-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">Firebase Authentication Test</h1>
+        
+        <div className="bg-dark-800 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4">Authentication Status</h2>
+          <div className="space-y-2">
+            <p className="text-gray-300">
+              <span className="font-medium">Status:</span>{' '}
               {user ? (
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <pre className="text-sm overflow-auto">
-                    {JSON.stringify(user, null, 2)}
-                  </pre>
-                </div>
+                <span className="text-green-400">Authenticated ✓</span>
               ) : (
-                <p className="text-gray-600">No user is currently signed in.</p>
+                <span className="text-yellow-400">Not Authenticated</span>
               )}
-            </div>
-
-            {/* Company Information */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Company Information</h2>
-              {company ? (
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <pre className="text-sm overflow-auto">
-                    {JSON.stringify(company, null, 2)}
-                  </pre>
-                </div>
-              ) : (
-                <p className="text-gray-600">No company data found for this user.</p>
-              )}
-            </div>
-
-            {/* Firebase Config Status */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Firebase Status</h2>
-              <div className="bg-gray-50 p-4 rounded-md space-y-2">
-                <div className="flex items-center space-x-2">
-                  <span className={`inline-block w-3 h-3 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  <span className="text-sm">Authentication: {user ? 'Connected' : 'Not Connected'}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`inline-block w-3 h-3 rounded-full ${company !== null ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                  <span className="text-sm">Firestore: {company !== null ? 'Data Available' : 'No Data'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex space-x-4">
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Refresh
-              </button>
-              <button
-                onClick={() => window.location.href = '/dashboard'}
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Go to Dashboard
-              </button>
-            </div>
+            </p>
           </div>
         </div>
+
+        {user && (
+          <div className="bg-dark-800 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-white mb-4">User Data</h2>
+            <div className="space-y-2">
+              <p className="text-gray-300">
+                <span className="font-medium">User ID:</span> {user.uid}
+              </p>
+              <p className="text-gray-300">
+                <span className="font-medium">Email:</span> {user.email}
+              </p>
+              {user.displayName && (
+                <p className="text-gray-300">
+                  <span className="font-medium">Display Name:</span> {user.displayName}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
+
+        {!user && (
+          <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+            <p className="text-blue-400">
+              Please sign in to test authentication
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

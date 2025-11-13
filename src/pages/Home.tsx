@@ -119,7 +119,7 @@ export default function Home() {
             Join hundreds of companies already using AuthoSec for secure B2B payments
           </p>
           <Link
-            to="/register"
+            to="/sign-up"
             className="inline-block firebase-gradient text-dark-900 px-8 py-4 rounded-lg font-semibold hover:opacity-90 transition-all shadow-2xl hover:shadow-primary-500/50"
           >
             Get Started Today

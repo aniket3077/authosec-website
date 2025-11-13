@@ -6,14 +6,16 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Features from './pages/Features';
 import Contact from './pages/Contact';
-import Register from './pages/Register';
-import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CompanySettings from './pages/CompanySettings';
 import TestAuth from './pages/TestAuth';
+import TestRoleBasedAccess from './pages/TestRoleBasedAccess';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import LoadingSpinner from './components/LoadingSpinner';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
 import { onAuthChange, signOut as firebaseSignOut } from './services/auth';
-import type { User } from './types';
+import type { User } from './services/auth';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -93,9 +95,16 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/features" element={<Features />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/test-auth" element={<TestAuth />} />
+            <Route path="/test-role-access" element={<TestRoleBasedAccess />} />
+            
+            {/* Role-based redirect after authentication */}
+            <Route
+              path="/redirect"
+              element={<RoleBasedRedirect />}
+            />
             
             {/* Legacy Dashboard (kept for backwards compatibility) */}
             <Route

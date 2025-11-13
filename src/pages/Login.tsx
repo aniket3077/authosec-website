@@ -1,131 +1,118 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
-import { Button } from '../components/LoadingSpinner';
-import Alert from '../components/Alert';
+import { useState, FormEvent } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { signIn } from '../services/auth';
-import { animate } from 'animejs';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Login() {
   const navigate = useNavigate();
-  const cardRef = useRef<HTMLDivElement>(null);
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  useEffect(() => {
-    if (cardRef.current) {
-      animate(cardRef.current.children, {
-        translateY: [50, 0],
-        opacity: [0, 1],
-        duration: 800,
-        delay: (_el: any, i: number) => i * 150,
-        ease: 'out(3)'
-      });
-    }
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    setAlert(null);
 
     try {
-      await signIn(email, password);
-      setAlert({ type: 'success', message: 'Login successful! Redirecting...' });
+      const firebaseUser = await signIn(email, password);
       
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1000);
-    } catch (error: any) {
-      setAlert({
-        type: 'error',
-        message: error.message || 'Invalid email or password',
-      });
+      // Get Firebase ID token and sync to database
+      const token = await firebaseUser.getIdToken();
+      
+      // Try to sync user to database (in case they registered before sync was implemented)
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            firstName: '',
+            lastName: '',
+            phone: '',
+          }),
+        });
+      } catch (syncError) {
+        console.warn('Database sync failed:', syncError);
+        // Continue anyway - user is signed in
+      }
+      
+      navigate('/redirect');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-500 to-firebase-blue flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div ref={cardRef} className="max-w-md w-full">
-        <div className="text-center mb-8" style={{ opacity: 0 }}>
-          <h1 className="text-4xl font-bold text-white mb-4">Welcome Back</h1>
-          <p className="text-lg text-white/90">Sign in to your company account</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-400">
+            Or{' '}
+            <Link to="/register" className="font-medium text-primary-500 hover:text-primary-400">
+              create a new account
+            </Link>
+          </p>
         </div>
-
-        <div className="bg-dark-800 rounded-xl shadow-lg p-8 border border-dark-700" style={{ opacity: 0 }}>
-          {alert && (
-            <div className="mb-6">
-              <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="rounded-md bg-red-900/20 border border-red-500/50 p-4">
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
-                <Mail className="inline mr-2" size={18} />
-                Email Address
+              <label htmlFor="email-address" className="sr-only">
+                Email address
               </label>
               <input
+                id="email-address"
+                name="email"
                 type="email"
-                id="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-dark-900 border border-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-dark-400"
-                placeholder="your@email.com"
               />
             </div>
-
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
-                <Lock className="inline mr-2" size={18} />
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
               <input
-                type="password"
                 id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-b-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-dark-900 border border-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-dark-400"
-                placeholder="••••••••"
               />
             </div>
+          </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-dark-700 rounded"
-                />
-                <label htmlFor="remember" className="ml-2 block text-sm text-dark-300">
-                  Remember me
-                </label>
-              </div>
-
-              <a href="/forgot-password" className="text-sm text-primary-400 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-
-            <Button type="submit" loading={loading} fullWidth className="firebase-gradient text-dark-900 font-semibold hover:opacity-90">
-              <span>Sign In</span>
-            </Button>
-
-            <p className="text-center text-dark-300 text-sm">
-              Don&apos;t have an account?{' '}
-              <a href="/register" className="text-primary-400 hover:underline font-semibold">
-                Register here
-              </a>
-            </p>
-          </form>
-        </div>
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? <LoadingSpinner size="sm" /> : 'Sign in'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

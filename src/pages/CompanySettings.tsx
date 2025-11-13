@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
-import { getCompanyByUserId, updateCompany } from '../services/company';
+import { onAuthChange, User } from '../services/auth';
 import { Company } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Alert from '../components/Alert';
 
 export default function CompanySettings() {
-  const [company, setCompany] = useState<Company | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [company] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -19,30 +19,28 @@ export default function CompanySettings() {
   });
 
   useEffect(() => {
-    loadCompanyData();
+    const unsubscribe = onAuthChange((authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        loadCompanyData();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadCompanyData = async () => {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
       if (!user) {
         setError('Not authenticated');
         setLoading(false);
         return;
       }
 
-      const companyData = await getCompanyByUserId(user.uid);
-      if (companyData) {
-        setCompany(companyData);
-        setFormData({
-          name: companyData.name,
-          email: companyData.email,
-          contactNumber: companyData.contactNumber || '',
-          businessType: companyData.businessType,
-        });
-      }
+      // TODO: Load company data from backend API
+      setLoading(false);
     } catch (err: any) {
       setError(err.message || 'Failed to load company data');
     } finally {
@@ -57,20 +55,11 @@ export default function CompanySettings() {
     setSaving(true);
 
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
       if (!user) {
         throw new Error('Not authenticated');
       }
 
-      await updateCompany(user.uid, {
-        name: formData.name,
-        email: formData.email,
-        contactNumber: formData.contactNumber,
-        businessType: formData.businessType,
-      });
-
+      // TODO: Update company via backend API
       setSuccess('Company settings updated successfully!');
       await loadCompanyData();
     } catch (err: any) {

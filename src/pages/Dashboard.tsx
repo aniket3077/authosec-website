@@ -1,72 +1,45 @@
 import { useState, useEffect } from 'react';
 import { Building, TrendingUp, Clock, CheckCircle, XCircle, DollarSign, Settings, QrCode, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { onAuthChange, User } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Alert from '../components/Alert';
-import { getCompanyByUserId } from '../services/company';
-import { getDashboardStats, getCompanyTransactions } from '../services/supabase';
-import { auth } from '../config/firebase';
 import type { Company, Transaction, DashboardStats } from '../types';
 
 export default function Dashboard() {
-  const [company, setCompany] = useState<Company | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [company] = useState<Company | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
+    const unsubscribe = onAuthChange((authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        loadDashboardData(authUser);
+      } else {
         setError('Please log in to view your dashboard');
         setLoading(false);
-        return;
       }
+    });
 
-      // Load company data from Firestore
-      try {
-        const companyData = await getCompanyByUserId(user.uid);
-        if (!companyData) {
-          setError('Company profile not found. Please complete your registration or contact support.');
-          setLoading(false);
-          return;
-        }
-        setCompany(companyData);
-      } catch (firestoreError: any) {
-        console.error('Firestore error:', firestoreError);
-        if (firestoreError.message?.includes('Firestore')) {
-          setError('Database not configured. Please ensure Firestore is enabled in Firebase Console.');
-        } else {
-          setError('Failed to load company profile. Firestore might not be set up yet.');
-        }
-        setLoading(false);
-        return;
-      }
+    return () => unsubscribe();
+  }, []);
 
-      // Load dashboard statistics from Supabase (optional - will show 0 if not set up)
-      try {
-        const statsData = await getDashboardStats(user.uid);
-        setStats(statsData);
-
-        const transactionsData = await getCompanyTransactions(user.uid);
-        setTransactions(transactionsData.slice(0, 10));
-      } catch (supabaseError: any) {
-        console.warn('Supabase data unavailable:', supabaseError);
-        // Set default stats if Supabase is not configured
-        setStats({
-          totalTransactions: 0,
-          pendingTransactions: 0,
-          acceptedTransactions: 0,
-          rejectedTransactions: 0,
-          totalAmount: 0,
-        });
-        setTransactions([]);
-      }
+  const loadDashboardData = async (currentUser: User) => {
+    try {
+      // TODO: Load company data from backend API
+      // For now, set default stats
+      setStats({
+        totalTransactions: 0,
+        pendingTransactions: 0,
+        acceptedTransactions: 0,
+        rejectedTransactions: 0,
+        totalAmount: 0,
+      });
+      setTransactions([]);
     } catch (err: any) {
       console.error('Dashboard error:', err);
       setError(err.message || 'Failed to load dashboard data');
@@ -83,56 +56,46 @@ export default function Dashboard() {
     );
   }
 
-  if (error || !company) {
+  if (error) {
     return (
       <div className="min-h-screen bg-dark-900 p-8">
         <div className="max-w-4xl mx-auto">
-          <Alert type="error" title="Error" message={error || 'Company data not found'} />
+          <Alert type="error" title="Error" message={error} />
           
-          {error?.includes('Firestore') && (
-            <div className="mt-6 bg-dark-800 rounded-xl p-6 border border-primary-500/30">
-              <h3 className="text-lg font-bold text-white mb-4">🔧 Setup Required: Enable Firestore Database</h3>
-              <p className="text-dark-300 mb-4">
-                Your Firebase project needs Firestore to store company data. Follow these steps:
-              </p>
-              <ol className="list-decimal list-inside space-y-2 text-dark-300 mb-4">
-                <li>Go to <a href="https://console.firebase.google.com/project/authsec-dfeb9/firestore" target="_blank" rel="noopener" className="text-primary-400 underline">Firebase Console - Firestore</a></li>
-                <li>Click &quot;Create database&quot;</li>
-                <li>Choose &quot;Start in production mode&quot; → Click &quot;Next&quot;</li>
-                <li>Select a location → Click &quot;Enable&quot;</li>
-                <li>Wait 2 minutes, then refresh this page</li>
-              </ol>
-              <a
-                href="https://console.firebase.google.com/project/authsec-dfeb9/firestore"
-                target="_blank"
-                rel="noopener"
-                className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
-              >
-                Open Firebase Console
-              </a>
-            </div>
-          )}
-
-          {!error?.includes('Firestore') && (
-            <div className="mt-6 bg-dark-800 rounded-xl p-6 border border-dark-700">
-              <h3 className="text-lg font-bold text-white mb-4">Need Help?</h3>
-              <p className="text-dark-300 mb-4">
-                Your account exists but the company profile couldn&apos;t be loaded. This might be because:
-              </p>
-              <ul className="list-disc list-inside space-y-2 text-dark-300">
-                <li>Firestore database is not enabled</li>
-                <li>The registration process was interrupted</li>
-                <li>Database permissions need to be configured</li>
-              </ul>
-              <p className="text-dark-300 mt-4">
-                Check the setup guide in <code className="bg-dark-900 px-2 py-1 rounded">FIRESTORE_SETUP_URGENT.md</code>
-              </p>
-            </div>
-          )}
+          <div className="mt-6 bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <h3 className="text-lg font-bold text-white mb-4">Need Help?</h3>
+            <p className="text-dark-300 mb-4">
+              Please sign in to access your dashboard.
+            </p>
+            <Link
+              to="/login"
+              className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
+        <LoadingSpinner size="lg" text="Loading..." />
+      </div>
+    );
+  }
+
+  // Show dashboard even without company data for now
+  const displayCompany = company || {
+    name: user.displayName || user.email || 'User',
+    email: user.email || '',
+    businessType: 'N/A',
+    registrationId: 'Pending',
+    contactNumber: 'N/A',
+    isActive: true,
+  };
 
   return (
     <div className="min-h-screen bg-dark-900 py-8">
@@ -140,8 +103,8 @@ export default function Dashboard() {
         {/* Header */}
         <div className="mb-8 flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Company Dashboard</h1>
-            <p className="text-dark-300">Welcome back, {company.name}</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
+            <p className="text-dark-300">Welcome back, {displayCompany.name}</p>
           </div>
           <Link
             to="/settings"
@@ -160,35 +123,35 @@ export default function Dashboard() {
                 <Building className="text-primary-600" size={32} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">{company.name}</h2>
+                <h2 className="text-2xl font-bold text-white mb-2">{displayCompany.name}</h2>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
                   <div>
                     <span className="text-dark-500">Email:</span>{' '}
-                    <span className="text-white font-medium">{company.email}</span>
+                    <span className="text-white font-medium">{displayCompany.email}</span>
                   </div>
                   <div>
                     <span className="text-dark-500">Business Type:</span>{' '}
-                    <span className="text-white font-medium capitalize">{company.businessType}</span>
+                    <span className="text-white font-medium capitalize">{displayCompany.businessType}</span>
                   </div>
                   <div>
                     <span className="text-dark-500">Registration ID:</span>{' '}
-                    <span className="text-white font-medium">{company.registrationId}</span>
+                    <span className="text-white font-medium">{displayCompany.registrationId}</span>
                   </div>
                   <div>
                     <span className="text-dark-500">Contact:</span>{' '}
-                    <span className="text-white font-medium">{company.contactNumber}</span>
+                    <span className="text-white font-medium">{displayCompany.contactNumber}</span>
                   </div>
                 </div>
               </div>
             </div>
             <span
               className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                company.isActive
+                displayCompany.isActive
                   ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800'
               }`}
             >
-              {company.isActive ? 'Active' : 'Inactive'}
+              {displayCompany.isActive ? 'Active' : 'Inactive'}
             </span>
           </div>
         </div>
@@ -301,7 +264,7 @@ export default function Dashboard() {
                         <td className="py-3 px-4">
                           <div className="text-sm">
                             <div className="font-medium text-white">
-                              {transaction.senderId === company.id ? (
+                              {transaction.senderId === (company?.id || user.uid) ? (
                                 <>To: {transaction.receiverName}</>
                               ) : (
                                 <>From: {transaction.senderName}</>
