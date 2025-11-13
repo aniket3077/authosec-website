@@ -6,7 +6,6 @@ import LoadingSpinner from '../components/LoadingSpinner';
 export default function TestAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthChange((authUser) => {
@@ -60,12 +59,6 @@ export default function TestAuth() {
                 </p>
               )}
             </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
-            <p className="text-red-400">{error}</p>
           </div>
         )}
 

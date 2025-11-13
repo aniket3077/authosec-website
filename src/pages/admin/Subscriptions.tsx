@@ -14,7 +14,7 @@ interface Subscription {
 }
 
 export default function Subscriptions() {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subscriptions] = useState<Subscription[]>([]);
 
   useEffect(() => {
     // TODO: Fetch subscriptions from Supabase

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Building2, Shield, Search } from 'lucide-react';
+import { User, Mail, Building2, Shield, Search } from 'lucide-react';
 
 interface User {
   id: string;
@@ -14,7 +14,7 @@ interface User {
 }
 
 export default function Users() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
 

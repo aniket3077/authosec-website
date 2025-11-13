@@ -14,7 +14,7 @@ interface Feedback {
 }
 
 export default function Feedback() {
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [feedbacks] = useState<Feedback[]>([]);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [response, setResponse] = useState('');
 

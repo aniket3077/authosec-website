@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../services/auth';
-import api from '../services/api';
+
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Register() {

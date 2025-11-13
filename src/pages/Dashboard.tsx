@@ -28,7 +28,7 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  const loadDashboardData = async (currentUser: User) => {
+  const loadDashboardData = async (_currentUser: User) => {
     try {
       // TODO: Load company data from backend API
       // For now, set default stats

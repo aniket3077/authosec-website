@@ -46,7 +46,7 @@ export default function RoleBasedRedirect() {
       const response = await api.users.getProfile();
       
       if (response.success && response.data) {
-        setProfile(response.data.user as UserProfile);
+        setProfile(response.data as UserProfile);
       } else {
         setError('Failed to load user profile');
       }

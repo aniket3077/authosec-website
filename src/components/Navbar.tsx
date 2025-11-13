@@ -21,7 +21,7 @@ interface UserProfile {
 
 export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const location = useLocation();
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users as UsersIcon, Plus, Trash2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import { Users as UsersIcon, Plus, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import { onAuthChange, User } from '../../services/auth';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Alert from '../../components/Alert';
@@ -49,7 +49,7 @@ export default function Users() {
     return () => unsubscribe();
   }, []);
 
-  const loadUsers = async (currentUser: User) => {
+  const loadUsers = async (_currentUser: User) => {
     try {
       const response = await api.company.getUsers();
       if (response.success && response.data) {

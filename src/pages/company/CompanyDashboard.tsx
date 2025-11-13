@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Activity, DollarSign, TrendingUp, ArrowUpRight, Bell, FileText, BarChart3 } from 'lucide-react';
+import { Users, Activity, DollarSign, TrendingUp, ArrowUpRight, Bell, FileText } from 'lucide-react';
 import { onAuthChange, User } from '../../services/auth';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import api from '../../services/api';
@@ -39,7 +39,7 @@ export default function CompanyDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthChange((authUser) => {
