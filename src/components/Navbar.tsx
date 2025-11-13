@@ -55,7 +55,10 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
       case 'SUPER_ADMIN':
         return '/admin/dashboard';
       case 'COMPANY_ADMIN':
-        return '/company/dashboard';
+        return '/owner/dashboard';
+      case 'ACCOUNT_USER':
+        // Company users go to company dashboard, others to basic dashboard
+        return profile.companyId ? '/company/dashboard' : '/dashboard';
       default:
         return '/dashboard';
     }
@@ -68,7 +71,9 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
       case 'SUPER_ADMIN':
         return 'Admin Panel';
       case 'COMPANY_ADMIN':
-        return 'Company Dashboard';
+        return 'Owner Dashboard';
+      case 'ACCOUNT_USER':
+        return profile.companyId ? 'Company Dashboard' : 'Dashboard';
       default:
         return 'Dashboard';
     }

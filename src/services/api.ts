@@ -120,11 +120,22 @@ const api = {
         body: JSON.stringify({ isActive })
       }),
     getSettings: () => apiFetch('/api/company/settings'),
-    updateSettings: (data: any) =>
+      updateSettings: (data: any) =>
       apiFetch('/api/company/settings', {
         method: 'PATCH',
         body: JSON.stringify(data)
       }),
+  },
+  // Owner Dashboard endpoints
+  owner: {
+    getDashboardStats: () => apiFetch('/api/owner/dashboard-stats'),
+    getEmployees: () => apiFetch('/api/owner/employees'),
+    getFinancialReports: (period: string) => 
+      apiFetch(`/api/owner/financial-reports?period=${period}`),
+    getAnalytics: () => apiFetch('/api/owner/analytics'),
+    exportPerformanceReport: () => apiFetch('/api/owner/employees/export'),
+    exportFinancialReport: (period: string, format: string) => 
+      apiFetch(`/api/owner/financial-reports/export?period=${period}&format=${format}`),
   },
 };
 

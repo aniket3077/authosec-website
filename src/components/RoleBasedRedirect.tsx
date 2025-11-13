@@ -107,9 +107,16 @@ export default function RoleBasedRedirect() {
   }
 
   if (profile.role === 'COMPANY_ADMIN') {
+    // Company admins are company owners with full dashboard access
+    return <Navigate to="/owner/dashboard" replace />;
+  }
+
+  // ACCOUNT_USER gets basic user dashboard
+  // Users with companyId but not COMPANY_ADMIN get company dashboard
+  if (profile.companyId && profile.role === 'ACCOUNT_USER') {
     return <Navigate to="/company/dashboard" replace />;
   }
 
-  // ACCOUNT_USER or any other role
+  // Default fallback to basic dashboard
   return <Navigate to="/dashboard" replace />;
 }

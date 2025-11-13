@@ -29,6 +29,18 @@ import CompanyDashboard from './pages/company/CompanyDashboard';
 import AccountUsers from './pages/company/AccountUsers';
 import Notifications from './pages/company/Notifications';
 
+// Owner Dashboard Pages
+import OwnerDashboard from './pages/owner/OwnerDashboard';
+import FinancialManagement from './pages/owner/FinancialManagement';
+import EmployeePerformance from './pages/owner/EmployeePerformance';
+import BusinessAnalytics from './pages/owner/BusinessAnalytics';
+import MerchantManagement from './pages/owner/MerchantManagement';
+import ProjectMonitoring from './pages/owner/ProjectMonitoring';
+import SecurityCompliance from './pages/owner/SecurityCompliance';
+import ApprovalsNotifications from './pages/owner/ApprovalsNotifications';
+import CompanySettingsOwner from './pages/owner/CompanySettings';
+import RoleManagement from './pages/owner/RoleManagement';
+
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -188,6 +200,88 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Owner Dashboard Routes */}
+            <Route
+              path="/owner/dashboard"
+              element={
+                <ProtectedRoute>
+                  <OwnerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/financial-management"
+              element={
+                <ProtectedRoute>
+                  <FinancialManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/employees"
+              element={
+                <ProtectedRoute>
+                  <EmployeePerformance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/analytics"
+              element={
+                <ProtectedRoute>
+                  <BusinessAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/merchants"
+              element={
+                <ProtectedRoute>
+                  <MerchantManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/projects"
+              element={
+                <ProtectedRoute>
+                  <ProjectMonitoring />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/security"
+              element={
+                <ProtectedRoute>
+                  <SecurityCompliance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/approvals"
+              element={
+                <ProtectedRoute>
+                  <ApprovalsNotifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/settings"
+              element={
+                <ProtectedRoute>
+                  <CompanySettingsOwner />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner/roles"
+              element={
+                <ProtectedRoute>
+                  <RoleManagement />
                 </ProtectedRoute>
               }
             />

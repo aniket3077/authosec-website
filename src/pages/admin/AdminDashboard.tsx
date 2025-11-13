@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Users, Building2, CreditCard, TrendingUp, Activity, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Building2, CreditCard, TrendingUp, Activity, DollarSign, MessageSquare, ArrowRight } from 'lucide-react';
 
 interface DashboardStats {
   totalCompanies: number;
@@ -11,6 +12,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats] = useState<DashboardStats>({
     totalCompanies: 0,
     activeCompanies: 0,
@@ -135,6 +137,72 @@ export default function AdminDashboard() {
               <Activity className="w-8 h-8 text-green-400" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Quick Actions / Feature Cards */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-white mb-4">Management Tools</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Companies Management */}
+          <button
+            onClick={() => navigate('/admin/companies')}
+            className="bg-dark-800 p-6 rounded-xl shadow-lg border border-dark-700 hover:border-primary-500 transition-all text-left group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
+                <Building2 className="w-6 h-6 text-blue-400" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-dark-500 group-hover:text-primary-400 transition-colors" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-1">Companies</h3>
+            <p className="text-sm text-dark-300">Manage all registered companies</p>
+          </button>
+
+          {/* Users Management */}
+          <button
+            onClick={() => navigate('/admin/users')}
+            className="bg-dark-800 p-6 rounded-xl shadow-lg border border-dark-700 hover:border-primary-500 transition-all text-left group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-purple-500/10 p-3 rounded-lg border border-purple-500/20">
+                <Users className="w-6 h-6 text-purple-400" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-dark-500 group-hover:text-primary-400 transition-colors" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-1">Users</h3>
+            <p className="text-sm text-dark-300">View and manage all users</p>
+          </button>
+
+          {/* Subscriptions */}
+          <button
+            onClick={() => navigate('/admin/subscriptions')}
+            className="bg-dark-800 p-6 rounded-xl shadow-lg border border-dark-700 hover:border-primary-500 transition-all text-left group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20">
+                <CreditCard className="w-6 h-6 text-green-400" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-dark-500 group-hover:text-primary-400 transition-colors" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-1">Subscriptions</h3>
+            <p className="text-sm text-dark-300">Manage subscription plans</p>
+          </button>
+
+          {/* Feedback */}
+          <button
+            onClick={() => navigate('/admin/feedback')}
+            className="bg-dark-800 p-6 rounded-xl shadow-lg border border-dark-700 hover:border-primary-500 transition-all text-left group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-primary-500/10 p-3 rounded-lg border border-primary-500/20">
+                <MessageSquare className="w-6 h-6 text-primary-400" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-dark-500 group-hover:text-primary-400 transition-colors" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-1">Feedback</h3>
+            <p className="text-sm text-dark-300">Review user feedback</p>
+          </button>
         </div>
       </div>
 
