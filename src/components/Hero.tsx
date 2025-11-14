@@ -2,8 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import { animate } from 'animejs';
-
-// const Scene3D = lazy(() => import('./Scene3D'));
+import Scene3D from './Scene3D';
 
 export default function Hero() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -152,13 +151,16 @@ export default function Hero() {
 
           {/* 3D Model Section */}
           <div className="mt-16">
-            <div className="w-full h-[400px] rounded-2xl bg-gradient-to-br from-dark-800 to-dark-900 border border-dark-700 flex items-center justify-center shadow-2xl">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🔒</div>
-                <div className="text-white text-xl font-semibold mb-2">Secure B2B Transactions</div>
-                <div className="text-dark-300">3D Interactive Scene Coming Soon</div>
-              </div>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                Interactive 3D Payment Terminal
+              </h2>
+              <p className="text-dark-300">Explore our secure payment technology in an immersive 3D environment</p>
             </div>
+            <Scene3D useCustomModel={true} modelPath="/models/payment terminal 3d model.glb" />
+            <p className="text-center text-sm text-dark-400 mt-4">
+              🖱️ Drag to rotate • Scroll to zoom • Auto-rotating enabled
+            </p>
           </div>
         </div>
       </div>

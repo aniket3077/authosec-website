@@ -2,15 +2,12 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { User, Mail, Lock, Phone, Building2, FileText, ArrowRight, ArrowLeft, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');

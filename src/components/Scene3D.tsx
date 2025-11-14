@@ -1,9 +1,26 @@
 /* eslint-disable react/no-unknown-property */
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, PerspectiveCamera, MeshDistortMaterial, Sphere } from '@react-three/drei';
+import { OrbitControls, Environment, PerspectiveCamera, MeshDistortMaterial, Sphere, useGLTF } from '@react-three/drei';
 import { Suspense } from 'react';
 
-// Animated security shield visualization
+// GLB Model Loader Component
+function GLBModel({ modelPath }: { modelPath: string }) {
+  try {
+    const { scene } = useGLTF(modelPath);
+    return (
+      <primitive 
+        object={scene} 
+        scale={2}
+        position={[0, -1, 0]}
+      />
+    );
+  } catch (error) {
+    console.error('Error loading GLB model:', error);
+    return <SecurityShield />;
+  }
+}
+
+// Animated security shield visualization (fallback)
 function SecurityShield() {
   return (
     <group>
@@ -57,7 +74,12 @@ function Loader() {
   );
 }
 
-export default function Scene3D() {
+interface Scene3DProps {
+  modelPath?: string;
+  useCustomModel?: boolean;
+}
+
+export default function Scene3D({ modelPath = '/models/scene.glb', useCustomModel = false }: Scene3DProps) {
   return (
     <div className="w-full h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-dark-800 to-dark-900 border border-dark-700 shadow-2xl">
       <Canvas shadows>
@@ -72,9 +94,13 @@ export default function Scene3D() {
         {/* Environment Reflection */}
         <Environment preset="city" />
         
-        {/* 3D Security Shield */}
+        {/* 3D Model or Security Shield */}
         <Suspense fallback={<Loader />}>
-          <SecurityShield />
+          {useCustomModel ? (
+            <GLBModel modelPath={modelPath} />
+          ) : (
+            <SecurityShield />
+          )}
         </Suspense>
         
         {/* Interactive Controls */}
@@ -91,4 +117,9 @@ export default function Scene3D() {
       </Canvas>
     </div>
   );
+}
+
+// Preload function for GLB models
+export function preloadGLBModel(path: string) {
+  useGLTF.preload(path);
 }
