@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { Button } from '../components/LoadingSpinner';
 import Alert from '../components/Alert';
-import { animate } from 'animejs';
+import anime from 'animejs';
 
 export default function Contact() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -24,12 +24,13 @@ export default function Contact() {
   useEffect(() => {
     // Hero animation
     if (heroRef.current) {
-      animate(heroRef.current.children, {
+      anime({
+        targets: Array.from(heroRef.current.children),
         translateY: [50, 0],
         opacity: [0, 1],
         duration: 1000,
-        delay: (_el: any, i: number) => i * 200,
-        ease: 'out(3)'
+        delay: (_el: Element, i: number) => i * 200,
+        easing: 'easeOutCubic'
       });
     }
 
@@ -37,11 +38,12 @@ export default function Contact() {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          animate(entry.target, {
+          anime({
+            targets: entry.target,
             translateX: entry.target === infoRef.current ? [-50, 0] : [50, 0],
             opacity: [0, 1],
             duration: 800,
-            ease: 'out(3)'
+            easing: 'easeOutCubic'
           });
           observer.unobserve(entry.target);
         }

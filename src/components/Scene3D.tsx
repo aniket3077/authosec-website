@@ -5,19 +5,15 @@ import { Suspense } from 'react';
 
 // GLB Model Loader Component
 function GLBModel({ modelPath }: { modelPath: string }) {
-  try {
-    const { scene } = useGLTF(modelPath);
-    return (
-      <primitive 
-        object={scene} 
-        scale={2}
-        position={[0, -1, 0]}
-      />
-    );
-  } catch (error) {
-    console.error('Error loading GLB model:', error);
-    return <SecurityShield />;
-  }
+  const { scene } = useGLTF(modelPath);
+  
+  return (
+    <primitive 
+      object={scene} 
+      scale={3.2}
+      position={[0, -1.6, 0]}
+    />
+  );
 }
 
 // Animated security shield visualization (fallback)
@@ -67,10 +63,13 @@ function SecurityShield() {
 
 function Loader() {
   return (
-    <mesh>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="#ff6b35" wireframe />
-    </mesh>
+    <group>
+      <mesh>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#ff6b35" wireframe />
+      </mesh>
+      <ambientLight intensity={0.5} />
+    </group>
   );
 }
 
@@ -79,17 +78,17 @@ interface Scene3DProps {
   useCustomModel?: boolean;
 }
 
-export default function Scene3D({ modelPath = '/models/scene.glb', useCustomModel = false }: Scene3DProps) {
+export default function Scene3D({ modelPath = '/models/payment-terminal.glb', useCustomModel = true }: Scene3DProps) {
   return (
-    <div className="w-full h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-dark-800 to-dark-900 border border-dark-700 shadow-2xl">
-      <Canvas shadows>
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+    <div className="w-full h-[450px] md:h-[500px] rounded-2xl overflow-hidden bg-transparent">
+      <Canvas shadows gl={{ alpha: true }} style={{ background: 'transparent' }}>
+        <PerspectiveCamera makeDefault position={[0, 0, 7]} fov={50} />
         
         {/* Lighting Setup */}
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff6b35" />
-        <pointLight position={[10, -10, -10]} intensity={0.3} color="#4ecdc4" />
+        <ambientLight intensity={0.6} />
+        <spotLight position={[10, 10, 10]} angle={0.3} penumbra={1} intensity={1.5} castShadow />
+        <pointLight position={[-10, -10, -10]} intensity={0.8} color="#ff6b35" />
+        <pointLight position={[10, -10, -10]} intensity={0.5} color="#4ecdc4" />
         
         {/* Environment Reflection */}
         <Environment preset="city" />
@@ -107,8 +106,8 @@ export default function Scene3D({ modelPath = '/models/scene.glb', useCustomMode
         <OrbitControls
           enableZoom={true}
           enablePan={false}
-          minDistance={3}
-          maxDistance={10}
+          minDistance={4}
+          maxDistance={15}
           autoRotate
           autoRotateSpeed={1.5}
           maxPolarAngle={Math.PI / 1.5}

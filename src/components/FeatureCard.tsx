@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef } from 'react';
-import { animate } from 'animejs';
+import anime from 'animejs';
 
 interface FeatureCardProps {
   icon: ReactNode;
@@ -15,12 +15,13 @@ export default function FeatureCard({ icon, title, description }: FeatureCardPro
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && cardRef.current) {
-            animate(cardRef.current, {
+            anime({
+              targets: cardRef.current,
               translateY: [50, 0],
               opacity: [0, 1],
               scale: [0.9, 1],
               duration: 800,
-              ease: 'out(3)'
+              easing: 'easeOutCubic'
             });
             observer.unobserve(entry.target);
           }

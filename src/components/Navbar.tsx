@@ -139,13 +139,13 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
             ) : (
               <>
                 <Link
-                  to="/sign-in"
+                  to="/login"
                   className="text-dark-200 hover:text-white px-4 py-2 rounded-lg hover:bg-dark-700 transition-all text-sm font-medium"
                 >
                   Sign In
                 </Link>
                 <Link
-                  to="/sign-up"
+                  to="/register"
                   className="firebase-gradient text-dark-900 px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-semibold shadow-lg"
                 >
                   Get Started
@@ -207,14 +207,14 @@ export default function Navbar({ isAuthenticated = false, onSignOut }: NavbarPro
               ) : (
                 <>
                   <Link
-                    to="/sign-in"
+                    to="/login"
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 rounded-lg text-dark-200 hover:bg-dark-700 hover:text-white text-sm font-medium"
                   >
                     Sign In
                   </Link>
                   <Link
-                    to="/sign-up"
+                    to="/register"
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 rounded-lg firebase-gradient text-dark-900 hover:opacity-90 text-center text-sm font-semibold"
                   >

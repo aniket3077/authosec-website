@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import {
   TrendingUp,
   Users,
@@ -62,16 +64,63 @@ function StatCard({ title, value, growth, icon, iconColor }: StatCardProps) {
 
 export default function OwnerDashboard() {
   const navigate = useNavigate();
-  const [stats] = useState<DashboardStats>({
-    revenue: 125000,
-    revenueGrowth: 18.5,
-    users: 2543,
-    usersGrowth: 12.3,
-    transactions: 8432,
-    transactionsGrowth: 24.7,
-    profitMargin: 34.5,
-    profitGrowth: 8.2,
+  const [stats, setStats] = useState<DashboardStats>({
+    revenue: 0,
+    revenueGrowth: 0,
+    users: 0,
+    usersGrowth: 0,
+    transactions: 0,
+    transactionsGrowth: 0,
+    profitMargin: 0,
+    profitGrowth: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
+
+  const loadDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const response = await api.owner.getDashboardStats();
+      if (response.success && response.data) {
+        setStats(response.data as DashboardStats);
+      } else {
+        setError('Failed to load dashboard statistics');
+      }
+    } catch (err: any) {
+      console.error('Dashboard stats error:', err);
+      setError(err.message || 'Failed to load statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading dashboard..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button
+            onClick={loadDashboardStats}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark-900 p-6">

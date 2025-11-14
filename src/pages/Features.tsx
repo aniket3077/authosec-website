@@ -1,6 +1,6 @@
 import FeatureCard from '../components/FeatureCard';
 import { useEffect, useRef } from 'react';
-import { animate } from 'animejs';
+import anime from 'animejs';
 import {
   Shield,
   QrCode,
@@ -25,12 +25,13 @@ export default function Features() {
   useEffect(() => {
     // Hero animation
     if (heroRef.current) {
-      animate(heroRef.current.children, {
+      anime({
+        targets: Array.from(heroRef.current.children),
         translateY: [50, 0],
         opacity: [0, 1],
         duration: 1000,
-        delay: (_el: any, i: number) => i * 200,
-        ease: 'out(3)'
+        delay: (_el: Element, i: number) => i * 200,
+        easing: 'easeOutCubic'
       });
     }
 
@@ -38,11 +39,12 @@ export default function Features() {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          animate(entry.target, {
+          anime({
+            targets: entry.target,
             translateY: [50, 0],
             opacity: [0, 1],
             duration: 800,
-            ease: 'out(3)'
+            easing: 'easeOutCubic'
           });
           observer.unobserve(entry.target);
         }
