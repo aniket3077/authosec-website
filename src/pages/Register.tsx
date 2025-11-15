@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -18,9 +19,75 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Personal Info, 2: Company Info
 
+  // Email validation function
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Phone number formatting to E.164 format
+  const formatPhoneNumber = (phone: string): string => {
+    // Trim whitespace
+    let formatted = phone.trim();
+    
+    // Remove spaces, dashes, parentheses
+    formatted = formatted.replace(/[\s\-()]/g, '');
+    
+    // If it already starts with +, check if valid
+    if (formatted.startsWith('+')) {
+      // Remove + for processing
+      const digits = formatted.substring(1);
+      // E.164 requires first digit after + to be 1-9
+      if (/^[1-9]\d{0,13}$/.test(digits)) {
+        return formatted;
+      }
+      // If invalid, remove + and continue
+      formatted = digits;
+    }
+    
+    // Remove all non-digit characters
+    let cleaned = formatted.replace(/\D/g, '');
+    
+    // Remove leading zeros (country codes don't start with 0)
+    while (cleaned.startsWith('0') && cleaned.length > 1) {
+      cleaned = cleaned.substring(1);
+    }
+    
+    // If it's a 10-digit number, assume India (+91)
+    if (cleaned.length === 10 && /^[6-9]/.test(cleaned)) {
+      return `+91${cleaned}`;
+    }
+    
+    // If it's 11-15 digits and starts with 1-9 (valid country code), add +
+    if (cleaned.length >= 10 && cleaned.length <= 15 && /^[1-9]/.test(cleaned)) {
+      return `+${cleaned}`;
+    }
+    
+    // Return original if we can't format it properly
+    return phone;
+  };
+
+  // Phone number validation (E.164 format)
+  const validatePhoneNumber = (phone: string): boolean => {
+    // E.164 format: +[country code][number], total 1-15 digits after +
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    return phoneRegex.test(phone);
+  };
+
   const handleNextStep = (e: FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate email
+    if (!email || !email.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -44,8 +111,18 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (!phone.trim() || phone.length < 10) {
-      setError('Please enter a valid phone number (10 digits)');
+    // Validate phone number
+    if (!phone || !phone.trim()) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+
+    // Format phone number to E.164
+    const formattedPhone = formatPhoneNumber(phone.trim());
+    
+    // Validate phone number format
+    if (!validatePhoneNumber(formattedPhone)) {
+      setError('Please enter a valid phone number with country code.\nExample: +919876543210 or 9876543210');
       return;
     }
 
@@ -68,12 +145,12 @@ export default function Register() {
 
     try {
       // Register user in Firebase Auth
-      const firebaseUser = await registerUser(email, password);
+      const firebaseUser = await registerUser(email.trim(), password);
       
       // Get Firebase ID token
       const token = await firebaseUser.getIdToken();
       
-      // Sync user to database with company info
+      // Sync user to database with company info (use formatted phone)
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/sync`, {
         method: 'POST',
         headers: {
@@ -81,12 +158,12 @@ export default function Register() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          phone,
-          companyName,
-          businessType,
-          registrationId,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: formattedPhone,
+          companyName: companyName.trim(),
+          businessType: businessType.trim(),
+          registrationId: registrationId.trim(),
         }),
       });
 
@@ -105,33 +182,41 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            {step === 1 ? 'Create your account' : 'Company Registration'}
+    <div className="min-h-screen flex items-center justify-center bg-dark-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-gradient-to-br from-primary-500/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-gradient-to-tl from-primary-600/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+      </div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
+        <div className="text-center">
+          <h2 className="text-4xl font-extrabold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
+            {step === 1 ? 'Create Account' : 'Company Registration'}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+          <p className="text-gray-400 text-base">
             {step === 1 ? (
               <>
-                Or{' '}
-                <Link to="/login" className="font-medium text-primary-500 hover:text-primary-400">
-                  sign in to existing account
+                Already have an account?{' '}
+                <Link to="/login" className="font-semibold text-primary-500 hover:text-primary-400 transition-colors">
+                  Sign in
                 </Link>
               </>
             ) : (
-              <span>Step 2 of 2 - Enter your company details</span>
+              <span>Step 2 of 2 - Company details</span>
             )}
           </p>
           {/* Progress Indicator */}
-          <div className="mt-4 flex items-center justify-center space-x-2">
-            <div className={`h-2 w-20 rounded-full ${step >= 1 ? 'bg-primary-500' : 'bg-gray-700'}`} />
-            <div className={`h-2 w-20 rounded-full ${step >= 2 ? 'bg-primary-500' : 'bg-gray-700'}`} />
+          <div className="mt-6 flex items-center justify-center space-x-2">
+            <div className={`h-2 w-24 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/50' : 'bg-dark-700'}`} />
+            <div className={`h-2 w-24 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/50' : 'bg-dark-700'}`} />
           </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={step === 1 ? handleNextStep : handleSubmit}>
+        <div className="bg-dark-800/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-dark-700/50 hover:border-primary-500/30 transition-all duration-300">
+        <form className="space-y-6" onSubmit={step === 1 ? handleNextStep : handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-900/20 border border-red-500/50 p-4">
+            <div className="rounded-lg bg-red-900/20 border border-red-500/50 p-4 flex items-start space-x-3 animate-shake">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
@@ -149,7 +234,7 @@ export default function Register() {
                       name="firstName"
                       type="text"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                       placeholder="First name"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
@@ -164,7 +249,7 @@ export default function Register() {
                       name="lastName"
                       type="text"
                       required
-                      className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                       placeholder="Last name"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
@@ -181,7 +266,7 @@ export default function Register() {
                     type="email"
                     autoComplete="email"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -197,7 +282,7 @@ export default function Register() {
                     type="password"
                     autoComplete="new-password"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                     placeholder="Password (min 6 characters)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -213,7 +298,7 @@ export default function Register() {
                     type="password"
                     autoComplete="new-password"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                     placeholder="Confirm password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -223,9 +308,10 @@ export default function Register() {
               <div>
                 <button
                   type="submit"
-                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  className="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-800 focus:ring-primary-500 transition-all duration-300 shadow-lg hover:shadow-primary-500/50 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Next: Company Details →
+                  <span>Next: Company Details</span>
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </>
@@ -241,7 +327,7 @@ export default function Register() {
                     name="phone"
                     type="tel"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                     placeholder="Phone number (10 digits)"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -256,7 +342,7 @@ export default function Register() {
                     name="companyName"
                     type="text"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                     placeholder="Company name"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
@@ -270,7 +356,7 @@ export default function Register() {
                     id="business-type"
                     name="businessType"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm cursor-pointer"
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
                   >
@@ -295,7 +381,7 @@ export default function Register() {
                     name="registrationId"
                     type="text"
                     required
-                    className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-700 bg-dark-800 placeholder-gray-500 text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-dark-600 bg-dark-900/70 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 hover:border-dark-500 transition-all sm:text-sm"
                     placeholder="Company registration ID (GST/CIN/etc)"
                     value={registrationId}
                     onChange={(e) => setRegistrationId(e.target.value)}
@@ -306,14 +392,14 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="group relative w-full flex justify-center py-2 px-4 border border-gray-700 text-sm font-medium rounded-md text-white bg-dark-800 hover:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  className="group relative w-full flex justify-center py-3 px-4 border border-dark-600 text-sm font-medium rounded-lg text-white bg-dark-800/50 hover:bg-dark-700 hover:border-dark-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-800 focus:ring-primary-500 transition-all duration-300"
                 >
                   ← Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-800 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-primary-500/50 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {loading ? <LoadingSpinner size="sm" /> : 'Complete Registration'}
                 </button>
@@ -321,6 +407,7 @@ export default function Register() {
             </>
           )}
         </form>
+        </div>
       </div>
     </div>
   );

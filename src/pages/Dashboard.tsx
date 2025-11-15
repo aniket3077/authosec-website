@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Building, TrendingUp, Clock, CheckCircle, XCircle, DollarSign, Settings, QrCode, Activity } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { onAuthChange, User } from '../services/auth';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Alert from '../components/Alert';
+import api from '../services/api';
 import type { Company, Transaction, DashboardStats } from '../types';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [company] = useState<Company | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -30,6 +32,26 @@ export default function Dashboard() {
 
   const loadDashboardData = async (_currentUser: User) => {
     try {
+      // Check user role and redirect if necessary
+      const profileResponse = await api.users.getProfile();
+      if (profileResponse.success && profileResponse.data) {
+        const userProfile = profileResponse.data as any;
+        
+        // Redirect based on role
+        if (userProfile.role === 'SUPER_ADMIN') {
+          navigate('/admin/dashboard', { replace: true });
+          return;
+        }
+        if (userProfile.role === 'COMPANY_ADMIN') {
+          navigate('/owner/dashboard', { replace: true });
+          return;
+        }
+        if (userProfile.companyId && userProfile.role === 'ACCOUNT_USER') {
+          navigate('/company/dashboard', { replace: true });
+          return;
+        }
+      }
+
       // TODO: Load company data from backend API
       // For now, set default stats
       setStats({

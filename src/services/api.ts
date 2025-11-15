@@ -11,6 +11,61 @@ export interface ApiResponse<T = any> {
 }
 
 /**
+ * Helper function to validate API response structure
+ */
+function validateApiResponse<T>(data: any): ApiResponse<T> {
+  // Ensure response has required structure
+  if (typeof data === 'object' && data !== null) {
+    return {
+      success: data.success ?? true,
+      data: data.data ?? data,
+      error: data.error,
+      message: data.message,
+      timestamp: data.timestamp || new Date().toISOString(),
+    };
+  }
+  
+  // If data is not an object, wrap it
+  return {
+    success: true,
+    data: data as T,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Helper function to check if response is JSON
+ */
+async function tryParseJson(response: Response): Promise<any> {
+  // Read response body once (can only be read once)
+  const text = await response.text();
+  
+  // If empty, return empty object
+  if (!text.trim()) {
+    return {};
+  }
+  
+  // Check content type
+  const contentType = response.headers.get('content-type');
+  
+  // If content type indicates JSON, try to parse
+  if (contentType && contentType.includes('application/json')) {
+    try {
+      return JSON.parse(text);
+    } catch (parseError) {
+      throw new Error('Failed to parse JSON response');
+    }
+  }
+  
+  // If not JSON content type, try to parse anyway (some APIs return JSON without proper header)
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Expected JSON response but got: ${contentType || 'unknown content type'}`);
+  }
+}
+
+/**
  * Generic API fetch wrapper with Firebase token
  */
 async function apiFetch<T>(
@@ -35,21 +90,81 @@ async function apiFetch<T>(
       Object.assign(headers, options.headers);
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'API request failed');
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
+    } catch (networkError: any) {
+      // Handle network errors (CORS, connection refused, etc.)
+      const errorMessage = networkError.message || 'Network error';
+      
+      if (errorMessage.toLowerCase().includes('cors')) {
+        throw new Error(`CORS error: Unable to connect to API at ${API_BASE_URL}. Please check CORS configuration.`);
+      }
+      
+      if (errorMessage.toLowerCase().includes('failed to fetch') || 
+          errorMessage.toLowerCase().includes('network request failed')) {
+        throw new Error(`Network error: Unable to reach API at ${API_BASE_URL}. Please check if the server is running.`);
+      }
+      
+      throw new Error(`Network error: ${errorMessage}`);
     }
 
-    return data;
+    // Parse response with proper error handling
+    let data: any;
+    try {
+      data = await tryParseJson(response);
+    } catch (parseError: any) {
+      console.error('JSON parse error:', parseError);
+      throw new Error(parseError.message || 'Failed to parse server response');
+    }
+
+    // Validate response structure
+    const validatedResponse = validateApiResponse<T>(data);
+
+    // If response is not ok, throw error with details
+    if (!response.ok) {
+      const errorMessage = validatedResponse.error || 
+                          validatedResponse.message || 
+                          `API request failed with status ${response.status}`;
+      
+      const apiError = new Error(errorMessage) as any;
+      apiError.status = response.status;
+      apiError.response = validatedResponse;
+      
+      console.error(`API Error (${response.status}):`, {
+        endpoint,
+        status: response.status,
+        error: errorMessage,
+        data: validatedResponse,
+      });
+      
+      throw apiError;
+    }
+
+    return validatedResponse;
   } catch (error: any) {
-    console.error('API Error:', error);
-    throw error;
+    // Re-throw if it's already a well-formed error
+    if (error.message && error.status) {
+      throw error;
+    }
+    
+    // Log error for debugging
+    console.error('API Error:', {
+      endpoint,
+      error: error.message || error,
+      stack: error.stack,
+    });
+    
+    // Create structured error
+    const apiError = new Error(error.message || 'API request failed') as any;
+    apiError.originalError = error;
+    
+    throw apiError;
   }
 }
 
@@ -120,7 +235,7 @@ const api = {
         body: JSON.stringify({ isActive })
       }),
     getSettings: () => apiFetch('/api/company/settings'),
-      updateSettings: (data: any) =>
+    updateSettings: (data: any) =>
       apiFetch('/api/company/settings', {
         method: 'PATCH',
         body: JSON.stringify(data)

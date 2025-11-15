@@ -10,8 +10,8 @@ function GLBModel({ modelPath }: { modelPath: string }) {
   return (
     <primitive 
       object={scene} 
-      scale={3.2}
-      position={[0, -1.6, 0]}
+      scale={5.0}
+      position={[0, 0.5, 0]}
     />
   );
 }
@@ -80,7 +80,7 @@ interface Scene3DProps {
 
 export default function Scene3D({ modelPath = '/models/payment-terminal.glb', useCustomModel = true }: Scene3DProps) {
   return (
-    <div className="w-full h-[450px] md:h-[500px] rounded-2xl overflow-hidden bg-transparent">
+    <div className="w-full h-[450px] md:h-[500px] rounded-2xl relative -mt-24 md:-mt-32 overflow-hidden bg-transparent">
       <Canvas shadows gl={{ alpha: true }} style={{ background: 'transparent' }}>
         <PerspectiveCamera makeDefault position={[0, 0, 7]} fov={50} />
         
